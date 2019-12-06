@@ -1,0 +1,184 @@
+﻿kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: libertyrp2
+  namespace: CHANGEME
+  labels:
+    app: libertyrp2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: libertyrp2
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: libertyrp2
+    spec:
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      terminationGracePeriodSeconds: 30
+      securityContext: {}
+      containers:
+        - name: libertyrp2
+          image: 'image-registry.openshift-image-registry.svc:5000/CHANGEME/libertyrp2'
+          ports:
+            - containerPort: 8946
+              protocol: TCP
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          imagePullPolicy: Always
+      dnsPolicy: ClusterFirst
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+---
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: libertyrp2sa
+  namespace: CHANGEME
+  annotations:
+    serviceaccounts.openshift.io/oauth-redirectreference.libertyrp2: >-
+      {"kind":"OAuthRedirectReference","apiVersion":"v1","reference":{"kind":"Route","name":"libertyrp2-authenticated"}}
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: libertyrp2
+  namespace: CHANGEME
+  labels:
+    app: libertyrp2
+  annotations:
+    service.alpha.openshift.io/serving-cert-secret-name: libertyrp2sa-tls
+spec:
+  ports:
+    - name: 8941-tcp
+      protocol: TCP
+      port: 8941
+      targetPort: 8941
+    - name: 8946-tcp
+      protocol: TCP
+      port: 443
+      targetPort: 8946
+    - name: proxy
+      protocol: TCP
+      port: 8888
+      targetPort: oauth-proxy
+  selector:
+    app: libertyrp2
+  type: ClusterIP
+  sessionAffinity: None
+status:
+  loadBalancer: {}
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: libertyrp2
+  namespace: CHANGEME
+  labels:
+    app: libertyrp2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: libertyrp2
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: libertyrp2
+    spec:
+      restartPolicy: Always
+      serviceAccountName: libertyrp2sa
+      schedulerName: default-scheduler
+      terminationGracePeriodSeconds: 30
+      securityContext: {}
+      containers:
+        - name: libertyrp2
+          image: 'image-registry.openshift-image-registry.svc:5000/CHANGEME/libertyrp2'
+          ports:
+            - containerPort: 8946
+              protocol: TCP
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          imagePullPolicy: Always
+        - resources: {}
+          terminationMessagePath: /dev/termination-log
+          name: oauth-proxy
+          ports:
+            - name: oauth-proxy
+              containerPort: 8888
+              protocol: TCP
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - name: secret-libertyrp2sa-tls
+              mountPath: /etc/tls/private
+          terminationMessagePolicy: File
+          image: 'quay.io/openshift/origin-oauth-proxy:4.1'
+          args:
+            - '-provider=openshift'
+            - >-
+              -client-secret-file=/var/run/secrets/kubernetes.io/serviceaccount/token
+            - '-cookie-secure=true'
+            - '-pass-access-token=true'
+            - '-cookie-secret=mF5P-UG61lA9yIAlNjI8JA=='
+            - '-https-address=:8888'
+            - '-http-address='
+            - '-email-domain=*'
+            - '-upstream=http://localhost:8941'
+            - '-tls-cert=/etc/tls/private/tls.crt'
+            - '-tls-key=/etc/tls/private/tls.key'
+            - '-openshift-service-account=libertyrp2sa'
+            - '-openshift-ca=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
+            - '-skip-auth-regex=^/metrics'
+      serviceAccount: libertyrp2sa
+      volumes:
+        - name: secret-libertyrp2sa-tls
+          secret:
+            secretName: libertyrp2sa-tls
+            defaultMode: 420
+      dnsPolicy: ClusterFirst
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+---
+kind: Route
+apiVersion: route.openshift.io/v1
+metadata:
+  name: libertyrp2-authenticated
+  namespace: CHANGEME
+  labels:
+    app: libertyrp2
+  annotations:
+    openshift.io/host.generated: 'true'
+spec:
+  host: libertyrp2-authenticated-CHANGEME.apps.papains.os.fyre.ibm.com
+  subdomain: ''
+  to:
+    kind: Service
+    name: libertyrp2
+    weight: 100
+  port:
+    targetPort: proxy
+  tls:
+    termination: reencrypt
+    insecureEdgeTerminationPolicy: Redirect
+  wildcardPolicy: None
+status:
+  ingress:
+    - host: libertyrp2-authenticated-CHANGEME.apps.papains.os.fyre.ibm.com
+      routerName: CHANGEME
+      conditions:
+        - type: Admitted
+          status: 'True'
+      wildcardPolicy: None
+      routerCanonicalHostname: apps.papains.os.fyre.ibm.com
