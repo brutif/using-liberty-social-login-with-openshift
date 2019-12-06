@@ -1,3 +1,3 @@
 # using-liberty-social-login-with-openshift
 
-under construction
+[using oauth](using-oauth)

@@ -1,0 +1,106 @@
+kind: DeploymentConfig
+apiVersion: apps.openshift.io/v1
+metadata:
+  name: social-rp3
+  namespace: default
+  labels:
+    app: social-rp3
+spec:
+  strategy:
+    type: Rolling
+    rollingParams:
+      updatePeriodSeconds: 1
+      intervalSeconds: 1
+      timeoutSeconds: 600
+      maxUnavailable: 25%
+      maxSurge: 25%
+    resources: {}
+    activeDeadlineSeconds: 21600
+  triggers:
+    - type: ConfigChange
+    - type: ImageChange
+      imageChangeParams:
+        automatic: true
+        containerNames:
+          - social-rp3
+        from:
+          kind: ImageStreamTag
+          namespace: default
+          name: 'social_rp:latest'
+        lastTriggeredImage: >-
+          docker-registry.default.svc:5000/default/social_rp@sha256:67a242681b0e2a7b8d9595c9edaddf6a199f26ce606cd609aa8062d1355b7561
+  replicas: 1
+  test: false
+  selector:
+    app: social-rp3
+    deploymentconfig: social-rp3
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: social-rp3
+        deploymentconfig: social-rp3 
+    spec:
+      containers:
+        - name: social-rp3
+          image: >-
+            docker-registry.default.svc:5000/default/social_rp@sha256:67a242681b0e2a7b8d9595c9edaddf6a199f26ce606cd609aa8062d1355b7561
+          ports:
+            - containerPort: 9080
+              protocol: TCP
+            - containerPort: 9443
+              protocol: TCP
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          imagePullPolicy: Always
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      securityContext: {}
+      schedulerName: default-scheduler
+---  
+kind: Service
+apiVersion: v1
+metadata:
+  name: social-rp3
+  namespace: default
+  labels:
+    app: social-rp3  
+spec:
+  ports:
+    - name: 9080-tcp
+      protocol: TCP
+      port: 9080
+      targetPort: 9080
+    - name: 9443-tcp
+      protocol: TCP
+      port: 9443
+      targetPort: 9443
+  selector:
+    deploymentconfig: social-rp3
+  clusterIP: 172.30.149.229
+  type: ClusterIP
+  sessionAffinity: None
+status:
+  loadBalancer: {}
+---
+kind: Route
+apiVersion: route.openshift.io/v1
+metadata:
+  name: social-rp3
+  namespace: default
+  labels:
+    app: social-rp3
+spec:
+  host: social-rp3-default.reffed1.fyre.ibm.com
+  to:
+    kind: Service
+    name: social-rp3
+    weight: 100
+  port:
+    targetPort: 9443-tcp
+  tls:
+    termination: passthrough
+    insecureEdgeTerminationPolicy: Redirect
+  wildcardPolicy: None

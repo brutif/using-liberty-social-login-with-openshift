@@ -1,0 +1,54 @@
+<server description="social">
+
+  <!-- Enable features -->
+  <featureManager>
+    <feature>appSecurity-3.0</feature>
+    <feature>socialLogin-1.0</feature>
+  </featureManager>
+
+<logging traceSpecification="com.ibm.ws.security.*=all=enabled" maxFiles="8" maxFileSize="200"/>
+
+<httpEndpoint  id="defaultHttpEndpoint" host="*" httpPort="8941" httpsPort="8946" > <tcpOptions soReuseAddr="true" /> </httpEndpoint>
+
+  <application
+         type="war"
+         id="formlogin"
+         name="formlogin"
+         location="formlogin.war">
+         <application-bnd>
+              <!--
+              <security-role name="RBAC-example">
+                   <group name="groupm" access-id="group:https://oauth-openshift.apps.papains.os.fyre.ibm.com/supervisors" />
+                   <group name="groupm" access-id="group:https://kubernetes.default.svc/supervisors"/>
+              </security-role>
+              -->
+              <security-role name="Employee">
+                      <group name="proxyFlow" access-id="group:https://kubernetes.default.svc/system:authenticated:oauth" />
+                      <group name="authFlow" access-id="group:https://oauth-openshift.apps.papains.os.fyre.ibm.com/system:authenticated:oauth" />
+              </security-role>
+              <security-role name="Manager">
+                      <group name="allManagers" access-id="group:https://kubernetes.default.svc/system:authenticated:oauth" />
+                      <group name="authFlow" access-id="group:https://oauth-openshift.apps.papains.os.fyre.ibm.com/system:authenticated:oauth" />
+              </security-role>
+        </application-bnd>
+  </application>
+
+  <!-- specify your clientId, clientSecret and userApiToken as liberty variables or environment variables -->
+  <oauth2Login id="openshiftLogin" 
+    scope="user:full" 
+    clientId="${myclientId}" 
+    clientSecret="${myclientSecret}"
+    authorizationEndpoint="https://oauth-openshift.apps.papains.os.fyre.ibm.com/oauth/authorize" 
+    tokenEndpoint="https://oauth-openshift.apps.papains.os.fyre.ibm.com/oauth/token"
+    userNameAttribute="username" 
+    groupNameAttribute="groups" 
+    userApiToken="${serviceAccountToken}" 
+    userApiType="kube" 
+    userApi="https://api.papains.os.fyre.ibm.com:6443/apis/authentication.k8s.io/v1/tokenreviews> 
+  </oauth2Login>
+
+  <keyStore id="defaultKeyStore" password="keyspass" />
+   
+
+</server>
+
