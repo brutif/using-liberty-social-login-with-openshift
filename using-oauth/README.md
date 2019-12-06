@@ -117,7 +117,7 @@ Browser shows some json about "invalid client"? Check that..
 
 401 or 403
   * Use the OpenShift Console to access the pod's Liberty logs to get more details.   Check your server.xml against one of the examples for discrepancies.
-Our goal is that the Liberty messages should be adequate to diagnose the problem.  If that's not the case please [open an issue](https://github.com/OpenLiberty/open-liberty/issues/new?assignees=&labels=team:Security+SSO) 
+Our goal is that the Liberty messages should be adequate to diagnose the problem.  
 
 Something else not covered here? 
-  * We know more about Liberty than Open Shift but we'd still like to hear about it.  Please let us know or [open an issue](https://github.com/OpenLiberty/open-liberty/issues/new?assignees=&labels=team:Security+SSO).  
+  * We know more about Liberty than Open Shift but we'd still like to hear about it.  You can [ask a question on StackOverflow](https://stackoverflow.com/tags/open-liberty).  
