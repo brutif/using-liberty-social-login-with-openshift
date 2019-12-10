@@ -18,17 +18,17 @@
          <application-bnd>
               <!--
               <security-role name="RBAC-example">
-                   <group name="groupm" access-id="group:https://oauth-openshift.apps.papains.os.fyre.ibm.com/supervisors" />
+                   <group name="groupm" access-id="group:https://api.papains.os.fyre.ibm.com:6443/supervisors" />
                    <group name="groupm" access-id="group:https://kubernetes.default.svc/supervisors"/>
               </security-role>
               -->
               <security-role name="Employee">
                       <group name="proxyFlow" access-id="group:https://kubernetes.default.svc/system:authenticated:oauth" />
-                      <group name="authFlow" access-id="group:https://oauth-openshift.apps.papains.os.fyre.ibm.com/system:authenticated:oauth" />
+                      <group name="authFlow" access-id="group:https://api.papains.os.fyre.ibm.com:6443/system:authenticated:oauth" />
               </security-role>
               <security-role name="Manager">
                       <group name="allManagers" access-id="group:https://kubernetes.default.svc/system:authenticated:oauth" />
-                      <group name="authFlow" access-id="group:https://oauth-openshift.apps.papains.os.fyre.ibm.com/system:authenticated:oauth" />
+                      <group name="authFlow" access-id="group:https://api.papains.os.fyre.ibm.com:6443/system:authenticated:oauth" />
               </security-role>
         </application-bnd>
   </application>
